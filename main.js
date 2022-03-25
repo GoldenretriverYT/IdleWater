@@ -52,6 +52,18 @@ var mousePos = {
     y: 0,
 }
 
+var renderedMap = null;
+
+/* Performance metrics */
+var _uiRenderTime = 0;
+var _mapRenderTime = 0;
+var _lastFrame = Date.now();
+var _averageTimeBetweenFrames = {
+    avg: 0,
+    total: 0,
+    counter: 0
+}
+
 /** @type {Array<Array<number>>} */
 var map = [];
 
@@ -68,26 +80,55 @@ window.addEventListener("mousemove", (ev) => {
 
 function startGame() {
     generateMap();
+    prerenderMap();
     startLoop();
 }
 
 function startLoop() {
     gameLoop = setInterval(() => {
+        _averageTimeBetweenFrames.total += (Date.now() - _lastFrame);
+        _averageTimeBetweenFrames.counter++;
+        recalcAverage(_averageTimeBetweenFrames);
+        _lastFrame = Date.now();
+
         renderMap();
         renderUI();
     }, 1);
 }
 
 function renderMap() {
-    for(var x = 0; x < map.length; x++) {
+    var renderMapStart = Date.now();
+
+    /*for(var x = 0; x < map.length; x++) {
         for(var y = 0; y < map[x].length; y++) {
             ctx.fillStyle = `hsl(203, 100%, ${60-(map[x][y]*40)}%)`;
             ctx.fillRect(x*10, y*10, 10, 10);
+        }
+    }*/
+
+    ctx.drawImage(renderedMap, 0, 0);
+
+    _mapRenderTime = Date.now() - renderMapStart;
+}
+
+async function prerenderMap() {
+    renderedMap = document.createElement("canvas");
+    renderedMap.width = "1000";
+    renderedMap.height = "1000";
+
+    var _ctx = renderedMap.getContext("2d");
+
+    for(var x = 0; x < map.length; x++) {
+        for(var y = 0; y < map[x].length; y++) {
+            _ctx.fillStyle = `hsl(203, 100%, ${60-(map[x][y]*40)}%)`;
+            _ctx.fillRect(x*10, y*10, 10, 10);
         }
     }
 }
 
 function renderUI() {
+    var renderUIStart = Date.now();
+
     tooltip.visible = false;
     var cursorPointer = false;
 
@@ -185,6 +226,8 @@ function renderUI() {
     }else {
         document.getElementById("canvas").style.cursor = "default";
     }
+
+    _uiRenderTime = (Date.now() - renderUIStart);
 }
 
 function formatNumber(num) {
@@ -249,4 +292,8 @@ function mouseInRect(rectX, rectY, width, height) {
 
 function pointInRect(x, y, rectX, rectY, width, height) {
     return (x > rectX && x < (rectX + width) && y > rectY && y < (rectY + height));
+}
+
+function recalcAverage(obj) {
+    obj.avg = obj.total / obj.counter;
 }
