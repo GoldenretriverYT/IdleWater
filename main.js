@@ -74,6 +74,10 @@ window.addEventListener("load", () => {
     startGame();
 });
 
+window.addEventListener("contextmenu", (ev) => {
+    ev.preventDefault();
+});
+
 window.addEventListener("mousemove", (ev) => {
     mousePos = getMousePos(ctx.canvas, {x: ev.clientX, y: ev.clientY});
 })
@@ -112,6 +116,8 @@ function renderMap() {
 }
 
 async function prerenderMap() {
+    var prerenderStart = Date.now();
+
     renderedMap = document.createElement("canvas");
     renderedMap.width = "1000";
     renderedMap.height = "1000";
@@ -124,6 +130,8 @@ async function prerenderMap() {
             _ctx.fillRect(x*10, y*10, 10, 10);
         }
     }
+
+    console.log("Pre-rendering map took " + (Date.now()-prerenderStart) + "ms");
 }
 
 function renderUI() {
